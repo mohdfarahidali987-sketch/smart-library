@@ -31,11 +31,11 @@ declare global {
 }
 
 const initialConfig: LibraryConfig = {
-  name: "Central University Library",
-  openTime: "08:00",
-  closeTime: "22:00",
+  name: "NIT Srinagar",
+  openTime: "09:00",
+  closeTime: "11:45",
   isOpen: true,
-  announcement: "Please keep quiet on Floor 2 (Silent Study Zone). All readers must exit by 10:00 PM.",
+  announcement: "Please keep quiet on Floor 2 (Silent Study Zone). All readers must exit by 11:45 PM.",
 };
 
 function generateInitialDesks(): Desk[] {

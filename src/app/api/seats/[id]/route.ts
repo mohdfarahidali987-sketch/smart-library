@@ -1,23 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLibraryState } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const { desks } = getLibraryState();
-  const desk = desks.find((d) => d.id.toLowerCase() === id.toLowerCase());
+  try {
+    const { id } = await params;
+    const rawDesk = await prisma.desk.findUnique({
+      where: { id: id.toUpperCase() },
+    });
 
-  if (!desk) {
+    if (!rawDesk) {
+      return NextResponse.json(
+        { success: false, message: `Desk ${id} not found.` },
+        { status: 404 }
+      );
+    }
+
+    const desk = {
+      ...rawDesk,
+      occupiedBy:
+        rawDesk.status === "occupied" && rawDesk.studentId
+          ? {
+              studentId: rawDesk.studentId,
+              studentName: rawDesk.studentName || `Student ${rawDesk.studentId}`,
+              checkedInAt: rawDesk.checkedInAt?.toISOString() || "",
+              expiresAt: rawDesk.expiresAt?.toISOString() || "",
+            }
+          : undefined,
+    };
+
+    return NextResponse.json({ success: true, desk });
+  } catch (error) {
     return NextResponse.json(
-      { success: false, message: `Desk ${id} not found.` },
-      { status: 404 }
+      { success: false, message: "Database query failed", error: String(error) },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    success: true,
-    desk,
-  });
 }

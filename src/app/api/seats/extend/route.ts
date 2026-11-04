@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extendTime } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +13,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cleanDeskId = deskId.trim().toUpperCase();
     const minutes = parseInt(extraMinutes, 10) || 60;
-    const result = extendTime(deskId, minutes);
 
-    if (!result.success) {
-      return NextResponse.json(result, { status: 400 });
+    const desk = await prisma.desk.findUnique({
+      where: { id: cleanDeskId },
+    });
+
+    if (!desk || desk.status !== "occupied" || !desk.expiresAt) {
+      return NextResponse.json(
+        { success: false, message: "Desk is not currently occupied." },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(result);
+    const currentExpiry = new Date(desk.expiresAt);
+    const newExpiry = new Date(currentExpiry.getTime() + minutes * 60000);
+
+    const updated = await prisma.desk.update({
+      where: { id: cleanDeskId },
+      data: { expiresAt: newExpiry },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Extended by ${minutes} minutes.`,
+      desk: updated,
+    });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Invalid request payload", error: String(error) },
-      { status: 400 }
+      { success: false, message: "Extend failed", error: String(error) },
+      { status: 500 }
     );
   }
 }

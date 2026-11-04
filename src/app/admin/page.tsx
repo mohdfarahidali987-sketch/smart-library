@@ -48,8 +48,9 @@ export default function AdminPage() {
 
   const [origin, setOrigin] = useState("");
 
-  useEffect(() => {
+   useEffect(() => {
     if (typeof window !== "undefined") {
+      
       setOrigin(window.location.origin);
     }
   }, []);
@@ -72,7 +73,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+     fetchData();
   }, [fetchData]);
 
   const handleUpdateConfig = async (e: React.FormEvent) => {

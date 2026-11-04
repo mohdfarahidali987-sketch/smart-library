@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Desk {
+  id          String    @id // e.g. "F1-01"
+  floor       Int
+  floorName   String
+  seatNumber  Int
+  hasSocket   Boolean   @default(false)
+  nearWindow  Boolean   @default(false)
+  status      String    @default("available") // "available", "occupied"
+
+  // Occupancy details
+  studentId   String?
+  studentName String?
+  checkedInAt DateTime?
+  expiresAt   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model LibraryConfig {
+  id           Int      @id @default(1)
+  name         String   @default("Central University Library")
+  openTime     String   @default("08:00")
+  closeTime    String   @default("22:00")
+  isOpen       Boolean  @default(true)
+  announcement String   @default("Please keep quiet on Floor 2.")
+}
