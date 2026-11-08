@@ -8,7 +8,7 @@ export async function GET() {
     if (!config) {
       config = await prisma.libraryConfig.create({
         data: {
-          name: "Central University Library",
+          name: "NIT Srinagar Library",
           closeTime: "22:00",
           announcement: "Please keep quiet on Floor 2.",
         },
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       update: body,
       create: {
         id: 1,
-        name: body.name || "Central University Library",
+        name: body.name || "NIT Srinagar Library",
         closeTime: body.closeTime || "22:00",
         announcement: body.announcement || "",
       },
