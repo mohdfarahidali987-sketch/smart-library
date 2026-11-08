@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { emitGuardAnnouncement } from "@/lib/socket";
 
 export async function GET() {
   try {
@@ -66,6 +67,12 @@ export async function POST(request: NextRequest) {
         closeTime: body.closeTime || "22:00",
         announcement: body.announcement || "",
       },
+    });
+
+    // ⚡ Emit real-time WebSocket alert for instant chime & broadcast on all phones
+    emitGuardAnnouncement({
+      announcement: updated.announcement,
+      closeTime: updated.closeTime,
     });
 
     return NextResponse.json({ success: true, config: updated });

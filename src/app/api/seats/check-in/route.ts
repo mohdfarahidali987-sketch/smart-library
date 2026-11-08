@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { emitSeatsUpdated } from "@/lib/socket";
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest) {
         checkedInAt: now,
         expiresAt,
       },
+    });
+
+    // ⚡ Emit real-time WebSocket event to all connected students
+    emitSeatsUpdated({
+      type: "check-in",
+      deskId: cleanDeskId,
+      status: "occupied",
+      studentName: cleanStudentName,
     });
 
     return NextResponse.json({

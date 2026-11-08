@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { emitSeatsUpdated } from "@/lib/socket";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +34,13 @@ export async function POST(request: NextRequest) {
     const updated = await prisma.desk.update({
       where: { id: cleanDeskId },
       data: { expiresAt: newExpiry },
+    });
+
+    // ⚡ Emit real-time WebSocket event
+    emitSeatsUpdated({
+      type: "extend",
+      deskId: cleanDeskId,
+      expiresAt: newExpiry.toISOString(),
     });
 
     return NextResponse.json({

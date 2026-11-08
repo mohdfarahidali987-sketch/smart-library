@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { io, Socket } from "socket.io-client";
 import { ClosingAlertBar } from "@/components/ClosingAlertBar";
 import {
   DeskIcon,
@@ -60,6 +61,7 @@ export default function HomePage() {
   const [onlyWindow, setOnlyWindow] = useState(false);
   const [activeMySeat, setActiveMySeat] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   // Load active seat from localStorage
   useEffect(() => {
@@ -81,10 +83,32 @@ export default function HomePage() {
     }
   }, []);
 
+  // ⚡ Real-Time WebSocket Connection (Socket.io)
   useEffect(() => {
     fetchSeats();
-    const interval = setInterval(fetchSeats, 6000); // Live poll every 6s
-    return () => clearInterval(interval);
+
+    const socket: Socket = io();
+
+    socket.on("connect", () => {
+      setIsSocketConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      setIsSocketConnected(false);
+    });
+
+    // Sub-millisecond instant sync when ANY seat is booked or released
+    socket.on("seats_updated", () => {
+      fetchSeats();
+    });
+
+    // Fallback polling every 20 seconds in case of intermittent network
+    const interval = setInterval(fetchSeats, 20000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
+    };
   }, [fetchSeats]);
 
   const handleQuickCheckout = async (deskId: string) => {
@@ -168,6 +192,14 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Real-time WebSocket connection indicator */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 border border-slate-200">
+              <span className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
+              <span className="text-slate-600 font-mono">
+                {isSocketConnected ? "WebSocket Live" : "Connecting..."}
+              </span>
+            </div>
+
             <button
               onClick={() => {
                 setLoading(true);

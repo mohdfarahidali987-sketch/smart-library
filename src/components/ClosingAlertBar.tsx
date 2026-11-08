@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
 import { AlertTriangleIcon, ClockIcon, Volume2Icon, BellIcon } from "./icons";
 
 interface StatusData {
@@ -72,9 +73,23 @@ export function ClosingAlertBar() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 15000);
-    return () => clearInterval(interval);
-  }, [fetchStatus]);
+
+    // ⚡ Socket.io real-time listener for instant guard announcements
+    const socket: Socket = io();
+
+    socket.on("guard_announcement", (payload) => {
+      fetchStatus();
+      if (soundEnabled) {
+        playChime();
+      }
+    });
+
+    const interval = setInterval(fetchStatus, 30000); // 30s background sync
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
+    };
+  }, [fetchStatus, playChime, soundEnabled]);
 
   if (!data) return null;
 
